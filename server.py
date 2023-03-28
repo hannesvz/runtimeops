@@ -7,7 +7,8 @@ import flask
 import flask.json
 import gevent.pywsgi
 import pymysql
-import slack
+
+import db
 
 from flask import request
 from threading import Thread
@@ -19,6 +20,8 @@ app = flask.Flask(__name__)
 
 logging.basicConfig(format='%(asctime)s {%(pathname)s:%(lineno)d} %(levelname)s %(message)s', level=config.variable('LOG_LEVEL', 'DEBUG'))
 
+mysql_pool = db.get_mysql_pool()
+
 
 @app.route('/')
 def root():
@@ -26,5 +29,6 @@ def root():
 
 
 if __name__ == "__main__":
+    db.init_db(mysql_pool)
     http_server = gevent.pywsgi.WSGIServer(('127.0.0.1', int(config.port)), app)
     http_server.serve_forever()

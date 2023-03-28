@@ -7,6 +7,7 @@ database_definitions = [
         'sql': '''CREATE TABLE `records` (
             `req_id` tinytext COLLATE utf8mb4_unicode_ci NOT NULL,
             `secret` tinytext COLLATE utf8mb4_unicode_ci NOT NULL,
+            `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
             PRIMARY KEY (`req_id`(255))
         )
     COLLATE='utf8mb4_unicode_ci'
