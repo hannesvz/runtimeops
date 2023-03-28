@@ -1,0 +1,33 @@
+name: app
+
+type: 'python:3.11'
+
+dependencies:
+    python3:
+        flask: '*'
+        platformshconfig: '*'
+        gevent: '*'
+        pymysql: '*'
+        pymysql-pooling: '*'
+        slackclient: '*'
+        requests: '*'
+        redis: '*'
+        humanfriendly: '*'
+        python-dateutil: '*'
+        schedule: '*'
+        arrow: '*'
+        cryptography: '*'
+
+relationships:
+    database: 'database:mysql'
+
+disk: 1024
+
+web:
+    commands:
+        start: python3 server.py
+
+operations:
+  bork:
+    commands:
+      start: python3 bork.py
