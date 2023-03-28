@@ -6,6 +6,9 @@ import logging
 
 import db
 
+from platformshconfig import Config
+config = Config()
+
 logging.basicConfig(format='%(asctime)s {%(pathname)s:%(lineno)d} %(levelname)s %(message)s', level=config.variable('LOG_LEVEL', 'DEBUG'))
 
 mysql_pool = db.get_mysql_pool()
