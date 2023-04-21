@@ -4,5 +4,5 @@ https://{default}/:
   redirects:
     paths:
       '^/fi/(.*)':
-        to: 'https://{default}/$1'
+        to: 'https://{default}/$1/$args'
         regexp: true
