@@ -1,3 +1,91 @@
-- name: Platform.sh - Get Environment URL
-  uses: rasben/action-platformsh-url@v1.1
+name: "Platform.sh - Get Environment URL"
+description: "Detecting if PlatformSH is building an environment, and returning the URL when it's done deploying."
+branding:
+  icon: "download-cloud"
+  color: "blue"
 
+inputs:
+  PLATFORMSH_KEY:
+    description: "API key for connecting to Platform.sh"
+    required: true
+    type: string
+
+  PLATFORMSH_ID:
+    description: "ID for the Platform.sh project."
+    required: true
+    type: string
+
+  ENVIRONMENT_NAME:
+    description: "Which environment to check against - defaults to pr-NUMBER"
+    default: "pr-${{ github.event.pull_request.number }}"
+    required: false
+    type: string
+
+  DEPLOYMENT_TYPE_EXCLUDES:
+    description: "Types of deployments NOT to wait for. Default: environment.cron - See types here: https://docs.platform.sh/integrations/activity/reference.html#type"
+    default: "environment.cron"
+    required: false
+    type: string
+
+  DEPLOY_WAIT_TIME:
+    description: "How many seconds should we maximum wait for the deploy to work? If the branch doesnt exist in the PlatformSH GIT Remote, this is how long the action will take. Actually inactive environments get detected instantly. Default: 1000 seconds."
+    default: 1000
+    required: false
+    type: integer
+
+outputs:
+  url:
+    description: "The ready-to-connect URL"
+    value: ${{ steps.platformsh_url.outputs.url }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup PHP and disable opcache
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.1"
+        extensions: none, curl, json, mbstring, pcre, and phar
+    - name: Get PlatformSH URL
+      shell: bash
+      id: platformsh_url
+      run: |
+        set +e
+        export PLATFORMSH_CLI_NO_INTERACTION=1;
+        export PLATFORM_PROJECT=${{ inputs.PLATFORMSH_ID }};
+        export PLATFORM_BRANCH=${{ inputs.ENVIRONMENT_NAME }};
+        export PLATFORMSH_CLI_TOKEN=${{ inputs.PLATFORMSH_KEY }};
+        curl -fsS https://platform.sh/cli/installer | php
+        echo "${{ inputs.ENVIRONMENT_NAME }}"
+        TRIES=0
+        SUCCESS=0
+        DELAY_BETWEEN_ATTEMPTS=5;
+        MAX_SECONDS=${{ inputs.DEPLOY_WAIT_TIME }};
+        MAX_TRIES=$(( MAX_SECONDS / DELAY_BETWEEN_ATTEMPTS ));
+        while [ $TRIES -le $MAX_TRIES ]; do \
+          TRIES=$((TRIES+1)); \
+          ACTS=$(~/.platformsh/bin/platform activities --columns=state --incomplete --no-header --format=plain --no-interaction --exclude-type=${{ inputs.DEPLOYMENT_TYPE_EXCLUDES }} 2>&1); \
+          if [[ "$ACTS" == "No activities found" ]]; then SUCCESS=1; break; fi; \
+          echo ""; \
+          echo "Current deploy state(s):"; \
+          echo "$ACTS"; \
+          sleep $DELAY_BETWEEN_ATTEMPTS; \
+        done \
+        STATUS=$(~/.platformsh/bin/platform env:info status 2>&1)
+        if [[ "$STATUS" == *"inactive"* ]]; then \
+          echo "PlatformSH reports that the environment is not active. This might be because you have run out of available environment slots. Try to run 'platform env:activate -e ${{ inputs.ENVIRONMENT_NAME }} -p ${{ inputs.PLATFORMSH_ID }}'"; \
+          exit 2; \
+        elif [[ "$SUCCESS" == 0 ]]; then \
+          echo "$STATUS"; \
+          exit 2; \
+        fi
+        URL=$(~/.platformsh/bin/platform env:url -1 --pipe)
+        CURL_HTTP_STATUS=$(curl -L -s -o /dev/null -w "%{http_code}" $URL)
+        if [[ "$CURL_HTTP_STATUS" != "200" ]]; then \
+          echo "PlatformSH reports the environment is ready, but cURL could not connect to it."; \
+          echo "URL: $URL"; \
+          echo "HTTP Status Code: $CURL_HTTP_STATUS"; \
+          exit 2; \
+        fi
+        echo "url=$URL" >> $GITHUB_OUTPUT
+        echo "$URL is active - you can use it as $ {{ [..].outputs.url }}"; \
