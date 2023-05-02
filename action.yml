@@ -1,0 +1,3 @@
+- name: Platform.sh - Get Environment URL
+  uses: rasben/action-platformsh-url@v1.1
+
