@@ -1,8 +1,5 @@
-https://{default}/:
-  type: upstream
-  upstream: "app:http"
-  redirects:
-    paths:
-      '^/fi/(.*)':
-        to: 'https://{default}/$1/$is_args$args'
-        regexp: true
+"https://{default}/": { type: upstream, upstream: "app:http", cache: { enabled: false } } 
+"https://*.{default}/": { type: upstream, upstream: "app:http", cache: { enabled: false } } 
+
+"https://{all}/": { type: redirect, to: "https://{default}/" }
+"https://*.{all}/": { type: redirect, to: "https://*.{default}/" }
