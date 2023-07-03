@@ -1,7 +1,7 @@
-"https://{default}/":
+"https://{all}/":
     type: upstream
     upstream: "app:http"
 
-"https://test.{default}/": 
+"https://test.{all}/": 
     type: upstream
     upstream: "app:http"
