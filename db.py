@@ -49,30 +49,43 @@ def get_mysql_pool():
 
 
 def query(pool, sql, data=None):
+    logging.debug(f'executing sql query {sql}. current pool size: {pool.current_size}')
     try:
-        pool.init()
-
-        conn = pool.get_conn()
-        cur = conn.cursor()
+        # loop forever until a db connection can be obtained
+        while True:
+            try:
+                conn = pool.get_conn()
+                cur = conn.cursor()
+                break
+            except:
+                logging.debug(f'Could not get sql pool connection. Waiting 1 second...')
+                time.sleep(1)
+                pass
 
         result = None
+
         if data:
             logging.debug(data)
             if type(data) == list:
-                cur.executemany(sql, (data))
+                cur.executemany(sql, data)
             else:
-                cur.execute(sql, (data))
+                cur.execute(sql, data)
         else:
             cur.execute(sql)
+
         result = cur.fetchall()
-        cur.close()
 
     except Exception as e:
-        logging.error(e)
-        conn.close()
+        logging.error(f'exception raised during main try block - {str(e)}')
         return False,e
 
-    else:
-        logging.debug(f'db query "{sql}" completed successfully')
-        conn.close()
-        return True,result
+    try:
+        logging.debug(f'closing connection. current pool size: {pool.current_size}')
+        pool.release(conn)
+        logging.debug(f'connection closed. current pool size: {pool.current_size}')
+    except Exception as e:
+        logging.error(f'Error encountered releasing the pool connection: {str(e)}')
+        pass
+
+    logging.debug(f'db query "{sql}" completed successfully')
+    return True,result
