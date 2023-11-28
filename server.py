@@ -22,7 +22,7 @@ mysql_pool = db.get_mysql_pool()
 
 @app.route("/")
 def root():
-    logging("hit received on /")
+    logging.debug("hit received on /")
     return "now this is podracing!"
 
 
