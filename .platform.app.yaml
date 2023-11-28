@@ -31,4 +31,4 @@ web:
 operations:
   bork:
     commands:
-      start: python3 bork.py
+      start: python3 bork.py 2>&1
