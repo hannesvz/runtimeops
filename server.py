@@ -23,7 +23,7 @@ mysql_pool = db.get_mysql_pool()
 @app.route("/")
 def root():
     logging.debug("hit received on /")
-    return "now this is podracing! integration set up to point to gitlab"
+    return "now this is podracing! integration set up to point to github"
 
 
 if __name__ == "__main__":
