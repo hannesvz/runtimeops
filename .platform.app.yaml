@@ -28,6 +28,10 @@ web:
     commands:
         start: python3 server.py
 
+variables:
+    env:
+        N_PREFIX: /app/.global
+
 hooks:
     build: |
         n auto
