@@ -18,6 +18,8 @@ dependencies:
         arrow: '*'
         cryptography: '*'
         loguru: '*'
+    nodejs:
+        n: "*"
 
 relationships:
     database: 'database:mysql'
